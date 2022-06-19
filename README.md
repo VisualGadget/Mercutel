@@ -11,3 +11,6 @@
 Устройство успешно работает со счётчиком Меркурий 200.02 в связке с Home Assistant. Отправка показаний в расчётный центр напрямую из ESP8266 на MicroPython сейчас невозможна по причине сломанной поддержки SSL, поэтому скрипт для передачи запускается средствами Home Assistant:
 
 [Меркурий 200] --(CAN)--> [Mercutel] --(WiFi MQTT)--> [Home Assistant] --(интернет)--> [ТРИЦ]
+
+## Отображение показаний в Home Assistant
+![HA Widget](/doc/Home%20Assistant/HA%20widget.png) ![HA Sensors](/doc/Home%20Assistant/HA%20sensors.png)
