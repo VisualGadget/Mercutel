@@ -1,6 +1,7 @@
-# Setup:
-# 1. copy tric.py and config.py to /config/python_scripts/mercutel/
-# 2. add the following lines to Home Assistant configuration.yaml
+# Automatic counter readings submission to TRIC (https://itpc.ru/)
+# Home Assistant configuration example. Setup:
+# 1. Copy tric.py and config.py to /config/python_scripts/mercutel/
+# 2. Add the following lines to configuration.yaml
 
 shell_command:
   send_counter_readings: "python /config/python_scripts/mercutel/tric.py T1={{float(states('sensor.electricity_t1'), 0)}} T2={{float(states('sensor.electricity_t2'), 0)}}"  # adjust tariff names according to config.py
