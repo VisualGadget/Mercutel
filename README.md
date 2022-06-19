@@ -1,5 +1,4 @@
 # Mercutel
-Telemetry system for Mercury 200 energy meter.
 Телеметрия для счётчика электроэнергии Меркурий 200.
 
 Проект реализован на ESP8266 и MicroPython.
