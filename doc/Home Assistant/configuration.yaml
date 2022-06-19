@@ -1,0 +1,18 @@
+# Setup:
+# 1. copy tric.py and config.py to /config/python_scripts/mercutel/
+# 2. add the following lines to Home Assistant configuration.yaml
+
+shell_command:
+  send_counter_readings: "python /config/python_scripts/mercutel/tric.py T1={{float(states('sensor.electricity_t1'), 0)}} T2={{float(states('sensor.electricity_t2'), 0)}}"  # adjust tariff names according to config.py
+
+automation:
+- alias: Report counters to TRIC
+  trigger:
+    platform: time
+    at: '09:30:00'
+  condition:
+  - condition: time
+    weekday:
+    - mon
+  action:
+  - service: shell_command.send_counter_readings

@@ -23,6 +23,7 @@ PIN_TX = 15  #
 # TRIC energy reporting service (https://itpc.ru)
 TRIC_ACCOUNT = '1234567'  # account number
 TRIC_PASSWORD = 'ACCOUNT_PASSWORD'  # account password
+
 # aliases for counters
 # 'PROFILE_ALIAS': {'sn': 'TRIC_COUNTER_SERIAL_NUMBER', 'name': 'TRIC_TARIFF_NAME', 'max_increment': MAXIMUM_ALLOWED_COUNTER_READINGS_INCREMENT_PER_REPORT}
 # get 'sn' and 'name' from https://lk.itpc.ru/#counters
