@@ -1,5 +1,3 @@
-# Usage example: python.exe .\tric.py T1=2435.15 T2=100.1
-
 import binascii
 import sys
 try:
@@ -67,7 +65,10 @@ def send_counter_readings(counter_readings: dict) -> bool:
     readings_to_send = {}
     conter_increment = {}
     for counter_measurement, current_readings in counter_readings.items():
-        home_counter = config.TRIC_COUNTER_MAPPING[counter_measurement]
+        home_counter = config.TRIC_COUNTER_MAPPING.get(counter_measurement)
+        if not home_counter:
+            print(f'Counter profile "{counter_measurement}" is absent in TRIC_COUNTER_MAPPING')
+            continue
         counter_name = home_counter['name']
         counter_sn = home_counter['sn']
         tric_counter = tric_counters.get((counter_sn, counter_name))
@@ -79,10 +80,10 @@ def send_counter_readings(counter_readings: dict) -> bool:
         if reported_readings is not None:
             increment = current_readings - reported_readings
             if increment < 0:
-                print(f'Counter "{counter_name}" is skipped because of readings decrement: {increment}')
+                print(f'Counter "{counter_name}" is skipped because of readings decrement: {increment:.1f}')
                 continue
             elif increment > home_counter['max_increment']:
-                print(f'Counter "{counter_name}" is skipped because of high readings increment: {increment}')
+                print(f'Counter "{counter_name}" is skipped because of high readings increment: {increment:.1f}')
                 continue
             conter_increment[counter_id] = increment
         readings_to_send[counter_id] = str(current_readings)
@@ -103,15 +104,27 @@ def send_counter_readings(counter_readings: dict) -> bool:
             for id in status[cat]:
                 counter_info = f'"{tric_counter_name[id]}"'
                 if id in readings_to_send:
-                    counter_info += f' {readings_to_send[id]} (+{conter_increment[id]})'
+                    counter_info += f' {readings_to_send[id]} (+{conter_increment[id]:.1f})'
                 counters.append(counter_info)
             print(f'Counters {cat}:', ', '.join(counters))
     return status['status']
 
 
-if __name__ == '__main__':
+def main():
+    if len(sys.argv) < 2:
+        print(
+            "Service to report counter readings to TRIC (https://itpc.ru)\n"
+            "Instructions for use:\n"
+            "1. Configure TRIC section settings in config.py\n"
+            "2. Run example: 'python.exe .\\tric.py T1=2435.15 T2=100.1' where T1 and T2 are counter profiles from TRIC_COUNTER_MAPPING"
+        )
+        return
     readings = {}
     for arg in sys.argv[1:]:
         t, v = arg.split('=')
         readings[t] = float(v)
     send_counter_readings(readings)
+
+
+if __name__ == '__main__':
+    main()
