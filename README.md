@@ -13,4 +13,4 @@
 [Меркурий 200] --(CAN)--> [Mercutel] --(WiFi MQTT)--> [Home Assistant] --(интернет)--> [ТРИЦ]
 
 ## Отображение показаний в Home Assistant
-![HA Widget](/doc/Home%20Assistant/HA%20widget.png) ![HA Sensors](/doc/Home%20Assistant/HA%20sensors.png)
+![HA Widget](https://github.com/VisualGadget/Mercutel/doc/Home%20Assistant/HA%20widget.png) ![HA Sensors](https://github.com/VisualGadget/Mercutel/doc/Home%20Assistant/HA%20sensors.png)
