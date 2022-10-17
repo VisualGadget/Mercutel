@@ -41,32 +41,33 @@ def main():
     #     utils.sleep_s(1)
 
     # print(em.sync_date_time())
-    # dt = em.date_time
-    # if dt:
-    #     print(f"{dt['hh']:02}:{dt['mm']:02}:{dt['ss']:02}, {dt['dow']}, {dt['mo']} {dt['dd']}, 20{dt['yy']}")
+    dt = em.date_time
+    if dt:
+        print(f"{dt['hh']:02}:{dt['mm']:02}:{dt['ss']:02}, {dt['dow']}, {dt['mo']} {dt['dd']}, 20{dt['yy']}")
 
     mqttm = MQTTElectricityMeter(config.MQTT_SERVER, config.MQTT_USER, config.MQTT_PASSWORD)
 
     n = 0
     while True:
-        state = {}
 
-        uip = em.uip
-        if uip:
-            state.update(uip)
+        if not n % 5:  # every 5 minutes
+            state = {}
 
-        if not n % 5:
+            uip = em.uip
+            if uip:
+                state.update(uip)
+
             energy = em.energy
             if energy:
-                energy12 = {tariff: value for tariff, value in energy.items() if tariff in ('T1', 'T2')}
+                energy12 = {tariff: value for tariff, value in energy.items() if tariff in config.TRIC_COUNTER_MAPPING}
                 state.update(energy12)
                 # if not n % (24 * 60): # 1 day
                 #     # does not work until uPython ESP8266 port fix SSL implementation https://github.com/micropython/micropython-lib/issues/400
                 #     tric.send_counter_readings(energy12)
 
-        print(state)
-        if state:
-            mqttm.send_update(state)
+            print(state)
+            if state:
+                mqttm.send_update(state)
 
         n += 1
         utils.sleep_s(60)
