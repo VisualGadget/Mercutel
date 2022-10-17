@@ -159,6 +159,7 @@ class MercuryEnergyMeter:
                 else:
                     error = 'wrong answer length'
             print(f'#{n}: {error}')
+            utils.watchdog.feed()
 
     def _ping_address(self, addr: int):
         '''
