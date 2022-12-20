@@ -1,6 +1,6 @@
 # Edit this file and rename it to config.py
 
-WDT_ENABLE = False  # Watchdog timer
+WDT_ENABLE = True  # Watchdog timer
 
 # last 6 digits of electric meter serial number, not including:
 # - year of manufacture (two last digits after dash or space)
@@ -24,9 +24,9 @@ PIN_TX = 15  #
 TRIC_ACCOUNT = '1234567'  # account number
 TRIC_PASSWORD = 'ACCOUNT_PASSWORD'  # account password
 
-# aliases for counters
+# Aliases for counters
 # 'PROFILE_ALIAS': {'sn': 'TRIC_COUNTER_SERIAL_NUMBER', 'name': 'TRIC_TARIFF_NAME', 'max_increment': MAXIMUM_ALLOWED_COUNTER_READINGS_INCREMENT_PER_REPORT}
-# get 'sn' and 'name' from https://lk.itpc.ru/#counters
+# Get 'sn' and 'name' from https://lk.itpc.ru/#counters. 'sn' and 'name' could be identical for several tariffs of a one counter
 TRIC_COUNTER_MAPPING = {
     'T1': {'sn': '09123456', 'name': 'Электроэнергия (День)', 'max_increment': 500},
     'T2': {'sn': '09123456', 'name': 'Электроэнергия (Ночь)', 'max_increment': 500}

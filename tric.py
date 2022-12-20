@@ -40,71 +40,83 @@ def send_counter_readings(counter_readings: dict) -> bool:
         }
     )
     if r.status_code != 200:
-        print(f'Authentication error: {r.status_code}')
+        print(f'Error: authentication failed: {r.status_code}')
         return False
+
     tokens = r.json()
 
     # get counters state from TRIC
     bearer_auth = {'Authorization': f'Bearer {tokens["access_token"]}'}
     r = requests.get(f'https://terminal.itpc.ru/v2/counter/reading/{config.TRIC_ACCOUNT}/', headers=bearer_auth)
     if r.status_code != 200:
-        print(f'Historical counter values reading error: {r.status_code}')
+        print(f'Error: historical counter values reading error: {r.status_code}')
         return False
+
     counters = r.json()['counters']
-    tric_counters = {}
+    tric_counters = []
     tric_counter_name = {}
     for counter_info in counters:
         reported_value_source = counter_info['current']
         if not reported_value_source:
             reported_value_source = counter_info['previous']
         reported_value = float(reported_value_source['value']) if reported_value_source else None
-        tric_counters[(counter_info['serial'], counter_info['service']['name'])] = {'id': counter_info['oid'], 'last_reported_value': reported_value}
+        tric_counters.append({'serial': counter_info['serial'], 'name': counter_info['service']['name'], 'id': counter_info['oid'], 'last_reported_value': reported_value})
         tric_counter_name[counter_info['oid']] = counter_info['service']['name']
 
     # prepare report
     readings_to_send = {}
-    conter_increment = {}
+    counter_increment = {}
     for counter_measurement, current_readings in counter_readings.items():
         home_counter = config.TRIC_COUNTER_MAPPING.get(counter_measurement)
         if not home_counter:
-            print(f'Counter profile "{counter_measurement}" is absent in TRIC_COUNTER_MAPPING')
+            print(f'Warning: counter profile "{counter_measurement}" is absent in TRIC_COUNTER_MAPPING')
             continue
+
         counter_name = home_counter['name']
         counter_sn = home_counter['sn']
-        tric_counter = tric_counters.get((counter_sn, counter_name))
-        if not tric_counter:
-            print(f'Counter #{counter_sn} "{counter_name}" is not registered in TRIC')
+        counter_max_inc = home_counter['max_increment']
+        for tric_counter in tric_counters:
+            if tric_counter['serial'] == counter_sn and tric_counter['name'] == counter_name:
+                reported_readings = tric_counter['last_reported_value']
+                if reported_readings is None or (reported_readings <= current_readings <= reported_readings + counter_max_inc and ('tric_counter' not in home_counter or reported_readings > home_counter['tric_counter']['last_reported_value'])):
+                    home_counter['tric_counter'] = tric_counter
+
+        hctc = home_counter.get('tric_counter')
+        if hctc is None:
+            print(f'Warning: unable to map counter #{counter_sn} "{counter_name}" to a TRIC counter')
             continue
-        counter_id = tric_counter['id']
-        reported_readings = tric_counter['last_reported_value']
-        if reported_readings is not None:
-            increment = current_readings - reported_readings
-            if increment < 0:
-                print(f'Counter "{counter_name}" is skipped because of readings decrement: {increment:.1f}')
-                continue
-            elif increment > home_counter['max_increment']:
-                print(f'Counter "{counter_name}" is skipped because of high readings increment: {increment:.1f}')
-                continue
-            conter_increment[counter_id] = increment
+
+        counter_id = hctc['id']
+        if counter_id in readings_to_send:
+            print('Error: several counters are mapped to a one TRIC counter')
+            return False
+
         readings_to_send[counter_id] = str(current_readings)
+        reported_readings = hctc['last_reported_value']
+        if reported_readings is not None:
+            counter_increment[counter_id] = current_readings - reported_readings
 
     # send report
     if not readings_to_send:
-        print('Nothing to report')
+        print('Warning: nothing to report')
         return False
+
     r = requests.put(f'https://terminal.itpc.ru/v2/counter/reading/{config.TRIC_ACCOUNT}/', json=readings_to_send, headers=bearer_auth)
     if r.status_code != 200:
-        print(f'Counter readins sending error: {r.status_code}')
+        print(f'Error: counter readins sending error: {r.status_code}')
         return False
+
     status = r.json()
     for cat in ('passed', 'skipped', 'failed'):
         counters_id = status[cat]
         if counters_id:
             counters = []
-            for id in status[cat]:
-                counter_info = f'"{tric_counter_name[id]}"'
-                if id in readings_to_send:
-                    counter_info += f' {readings_to_send[id]} (+{conter_increment[id]:.1f})'
+            for cid in counters_id:
+                counter_info = f'"{tric_counter_name[cid]}"'
+                if cid in readings_to_send:
+                    counter_info += f' {readings_to_send[cid]}'
+                if cid in counter_increment:
+                    counter_info += f' (+{counter_increment[cid]:.1f})'
                 counters.append(counter_info)
             print(f'Counters {cat}:', ', '.join(counters))
     return status['status']

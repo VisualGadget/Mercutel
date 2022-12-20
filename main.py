@@ -67,9 +67,12 @@ def main():
 
             print(state)
             if state:
+                print('before send_update')
                 mqttm.send_update(state)
+                print('after send_update')
 
         n += 1
+        print('sleep 60')
         utils.sleep_s(60)
 
 if __name__ == '__main__':
