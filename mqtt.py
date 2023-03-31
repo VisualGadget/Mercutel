@@ -46,7 +46,7 @@ class MQTTElectricityMeter:
                 'expire_after': 24 * 60 * 60
             }
         }
-        self._mqtt = umqtt.simple.MQTTClient('Electricity Meter', server, user=user, password=password)
+        self._mqtt = umqtt.simple.MQTTClient('Electricity Meter', server, user=user, password=password, keepalive=30)
         self._connect()
         for param_name, sensor_info in self.measured_parameters.items():
             uid = f'EMeter_{mac[-4:]}_{param_name}'
