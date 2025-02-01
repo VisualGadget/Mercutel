@@ -84,7 +84,7 @@ def send_counter_readings(counter_readings: dict) -> bool:
                         break
                     # if 'tric_counter' in home_counter and reported_readings > home_counter['tric_counter']['last_reported_value']:
                     #     # same name same serial check
-                    #     break
+                    #     continue
                 home_counter['tric_counter'] = tric_counter
 
         hctc = home_counter.get('tric_counter')
