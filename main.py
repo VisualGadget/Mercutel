@@ -19,13 +19,15 @@ def set_meter_speed(speed):
         em.port_speed = speed
         utils.watchdog.feed()
 
-def create_emeter_auto_speed() -> MercuryEnergyMeter:
+def create_emeter_auto_speed() -> MercuryEnergyMeter | None:
     em = create_emeter()
     for cur_speed in em.SUPPORTED_PORT_SPEEDS:
         em.port_speed = cur_speed
         if em.serial_number:
             return em
         utils.watchdog.feed()
+
+    return None
 
 def main():
     print('Mercutel')

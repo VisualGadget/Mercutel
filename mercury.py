@@ -105,7 +105,7 @@ class MercuryEnergyMeter:
         utime.sleep_us(int(delay_us))  # uart_wait_tx_done simulation
         self._pin_txe.off()
 
-    def _send_data(self, cmd: int, body: bytes, addr: int = None):
+    def _send_data(self, cmd: int, body: bytes | None, addr: int | None = None):
         # ADDR-CMD-BODY-CRC
         if addr is None:
             addr = self.addr
@@ -142,7 +142,7 @@ class MercuryEnergyMeter:
         return answer[5:-2]
 
 
-    def _talk(self, cmd: int, body: bytes = None, answer_format: str = ''):
+    def _talk(self, cmd: int, body: bytes | None = None, answer_format: str = ''):
         for n in range(1, 100):
             with self._uart_ctx:
                 self._send_data(cmd, body)
@@ -194,41 +194,46 @@ class MercuryEnergyMeter:
         self._port_speed = speed
 
     @property
-    def energy(self) -> dict:
+    def energy(self) -> dict | None:
         # ADDR-CMD-CRC -> ADDR-CMD-count[BCD,4]*4-CRC
         data = self._talk(self.COMMAND.GET_ENERGY, answer_format='16B')
-        if data:
-            res = tuple(self.bcd_decode(data[n: n + 4], 2) for n in range(0, len(data), 4))
-            return dict(zip(('T1', 'T2', 'T3', 'T4'), res))
+        if data is None:
+            return None
+
+        res = tuple(self.bcd_decode(data[n: n + 4], 2) for n in range(0, len(data), 4))
+        return dict(zip(('T1', 'T2', 'T3', 'T4'), res))
 
     @property
-    def uip(self) -> dict:
+    def uip(self) -> dict | None:
         # ADDR-CMD-CRC -> ADDR-CMD-V[BCD,2]-I[BCD,2]-P[BCD,3]-CRC
         data = self._talk(self.COMMAND.GET_UIP, answer_format='7B')
-        if data:
-            res = {
-                'U': self.bcd_decode(data[:2], 1),
-                'I': self.bcd_decode(data[2:4], 2),
-                'P': self.bcd_decode(data[4:], 0)
-            }
-            return res
+        if data is None:
+            return None
+
+        res = {
+            'U': self.bcd_decode(data[:2], 1),
+            'I': self.bcd_decode(data[2:4], 2),
+            'P': self.bcd_decode(data[4:], 0)
+        }
+        return res
 
     @property
-    def serial_number(self) -> int:
+    def serial_number(self) -> int | None:
         # ADDR-CMD-CRC -> ADDR-CMD-serial[4]-CRC
         data = self._talk(self.COMMAND.GET_SERIAL_NUMBER, answer_format='>I')
-        if data:
-            return data[0]
+        return data[0] if data is not None else None
 
     @property
-    def date_time(self):
+    def date_time(self) -> dict | None:
         # ADDR-CMD-CRC -> ADDR-CMD-timedate[BCD,7]-CRC
         data = self._talk(self.COMMAND.GET_DATE_TIME, answer_format='7B')
-        if data:
-            dec_data = list(map(lambda b: self.bcd_decode([b]), data))
-            dec_data[0] = DOWS[dec_data[0]]
-            dec_data[5] = MONTHS[dec_data[5] - 1]
-            return dict(zip(('dow', 'hh', 'mm', 'ss', 'dd', 'mo', 'yy'), dec_data))
+        if data is None:
+            return None
+
+        dec_data = list(map(lambda b: self.bcd_decode([b]), data))
+        dec_data[0] = DOWS[dec_data[0]]
+        dec_data[5] = MONTHS[dec_data[5] - 1]
+        return dict(zip(('dow', 'hh', 'mm', 'ss', 'dd', 'mo', 'yy'), dec_data))
 
     def set_date_time(self, yy: int, mo: int, dd: int, hh: int, mm: int, ss: int, dow: int) -> bool:
         # ADDR-CMD-timedate[BCD,7]-CRC -> ADDR-CMD-CRC
@@ -239,7 +244,7 @@ class MercuryEnergyMeter:
 
     def sync_date_time(self) -> bool:
         '''
-        Syncronize clock and calendar with NTP server
+        Synchronize clock and calendar with NTP server
         '''
         tm = utils.sync_time()
         return self.set_date_time(*tm[:-1])
