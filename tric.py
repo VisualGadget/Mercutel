@@ -78,8 +78,14 @@ def send_counter_readings(counter_readings: dict) -> bool:
         for tric_counter in tric_counters:
             if tric_counter['serial'] == counter_sn and tric_counter['name'] == counter_name:
                 reported_readings = tric_counter['last_reported_value']
-                if reported_readings is None or (reported_readings <= current_readings <= reported_readings + counter_max_inc and ('tric_counter' not in home_counter or reported_readings > home_counter['tric_counter']['last_reported_value'])):
-                    home_counter['tric_counter'] = tric_counter
+                if reported_readings is not None:
+                    if not (reported_readings <= current_readings <= reported_readings + counter_max_inc):
+                        print(f'Counter "{counter_name}" has out of expected range readings: {current_readings}')
+                        break
+                    # if 'tric_counter' in home_counter and reported_readings > home_counter['tric_counter']['last_reported_value']:
+                    #     # same name same serial check
+                    #     break
+                home_counter['tric_counter'] = tric_counter
 
         hctc = home_counter.get('tric_counter')
         if hctc is None:
@@ -103,7 +109,7 @@ def send_counter_readings(counter_readings: dict) -> bool:
 
     r = requests.put(f'https://terminal.itpc.ru/v2/counter/reading/{config.TRIC_ACCOUNT}/', json=readings_to_send, headers=bearer_auth)
     if r.status_code != 200:
-        print(f'Error: counter readins sending error: {r.status_code}')
+        print(f'Error: counter readings sending error: {r.status_code}')
         return False
 
     status = r.json()
